@@ -1,0 +1,106 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+}
+h1 {
+  color: #4CAF50;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+table, th, td {
+  border: 1px solid #ddd;
+}
+th, td {
+  padding: 8px;
+  text-align: center;
+}
+th {
+  background-color: #f2f2f2;
+}
+a {
+  display: inline-block;
+  margin-top: 20px;
+  color: #4CAF50;
+  text-decoration: none;
+}
+a:hover {
+  color: #45a049;
+}
+
+.gantt-container {
+  position: relative;
+  width: 100%;
+  height: 50px;
+  border: 1px solid #ccc;
+  margin-top: 20px;
+
+}
+
+.gantt-bar {
+  position: absolute;
+  height: 100%;
+  background-color: #76c7c0;
+  color: white;
+  text-align: center;
+  line-height: 50px;
+  border: 1px solid #555;
+  box-sizing: border-box;
+  
+}
+
+.gantt-timeline {
+  display: flex;
+  justify-content: flex-start;
+  gap: 39px;  /* Adjust the gap to your preferred time interval */
+  margin-top: 10px;
+}
+
+.gantt-time {
+  font-size: 14px;
+  color: #333;
+}
+
+.gantt-chart {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center; /* Vertically align blocks */
+  overflow-x: auto; /* Allow scrolling if the chart overflows */
+  padding: 10px;
+  margin-top: 20px;
+  background-color: #f4f4f4; /* Light background for better contrast */
+  border-radius: 10px;
+  border: 1px solid #ddd; /* Light border around the chart */
+}
+
+.gantt-block {
+  margin: 5px;
+  padding: 10px 20px;
+  background: linear-gradient(to right, #76c7c0, #4d9f97); /* Gradient effect for a modern look */
+  border: 2px solid #3c7875; /* Darker border for contrast */
+  border-radius: 5px;
+  text-align: center;
+  font-size: 14px; /* Slightly larger font size for readability */
+  color: white; /* Text color to contrast with the background */
+  font-weight: bold;
+  min-width: 60px; /* Ensure blocks have a minimum width */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for a 3D effect */
+  transition: transform 0.3s ease-in-out; /* Add transition for hover effect */
+}
+
+.gantt-block:hover {
+  transform: scale(1.05); /* Slight scaling effect when hovering over the block */
+}
+
+.gantt-block span {
+  display: block;
+  font-size: 14px;
+  font-weight: bold;
+  color: white;
+}
