@@ -26,8 +26,23 @@ input[type="submit"]:hover {
   margin-top: 10px;
   font-weight: bold;
 }
+
 .instructions {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  padding: 10px;
   margin-bottom: 20px;
   font-size: 14px;
   color: #555;
+}
+
+label {
+  display: block;
+  margin-top: 10px;
+}
+
+input {
+  margin-bottom: 10px;
+  padding: 5px;
+  width: 300px;
 }
