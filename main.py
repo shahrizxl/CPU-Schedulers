@@ -106,6 +106,84 @@ def rr_scheduler(n, arrival, burst, quantum, priority):
 
     return result
 
+@app.route('/sjn', methods=['GET', 'POST'])
+def sjn():
+    if request.method == 'POST':
+        n = int(request.form['process_count'])
+        arrival = list(map(int, request.form['arrival'].split(',')))
+        burst = list(map(int, request.form['burst'].split(',')))
+
+        if n < 3 or n > 10:
+            error = "Number of processes must be between 3 and 10."
+            return render_template('sjn.html', error=error)
+
+        if len(arrival) != n or len(burst) != n:
+            error = "The number of arrival times and burst times must match the number of processes."
+            return render_template('sjn.html', error=error)
+
+        result = sjn_scheduler(n, arrival, burst)
+        return render_template('resultsjn.html', algorithm="Shortest Job Next", result=result)
+
+    return render_template('sjn.html')
+
+
+def sjn_scheduler(n, arrival, burst):
+    T = [[i + 1, arrival[i], burst[i], 0, 0, 0] for i in range(n)]  # Process ID, Arrival, Burst, Completion, Turnaround, Waiting
+    total_turnaround, total_waiting = 0, 0
+
+    T.sort(key=lambda x: x[1])  # Sort by arrival time
+
+    completed = 0
+    current_time = 0
+    is_visited = [False] * n
+    gantt_chart = []  # To store the Gantt Chart data
+
+    while completed < n:
+        index = -1
+        shortest_burst = float('inf')
+
+        for i in range(n):
+            if not is_visited[i] and T[i][1] <= current_time and T[i][2] < shortest_burst:
+                shortest_burst = T[i][2]
+                index = i
+
+        if index == -1:
+            if not gantt_chart or gantt_chart[-1][0] != '-':
+                gantt_chart.append(('-', current_time, current_time + 1))
+            else:
+                gantt_chart[-1] = ('-', gantt_chart[-1][1], gantt_chart[-1][2] + 1)
+            current_time += 1
+            continue
+
+        is_visited[index] = True
+        completed += 1
+
+        
+        gantt_chart.append((f"P{T[index][0]}", current_time, current_time + T[index][2]))
+
+        current_time += T[index][2]
+        T[index][3] = current_time  # Completion Time
+        T[index][4] = T[index][3] - T[index][1]  # Turnaround Time
+        T[index][5] = T[index][4] - T[index][2]  # Waiting Time
+        total_turnaround += T[index][4]
+        total_waiting += T[index][5]
+
+    avg_turnaround = total_turnaround / n
+    avg_waiting = total_waiting / n
+
+    result = {
+        'Processes': [f"P{T[i][0]}" for i in range(n)],
+        'Arrival Times': [T[i][1] for i in range(n)],
+        'Burst Times': [T[i][2] for i in range(n)],
+        'Completion Times': [T[i][3] for i in range(n)],
+        'Turnaround Times': [T[i][4] for i in range(n)], #got error for turnaround and waiting need to state at the result 
+        'Waiting Times': [T[i][5] for i in range(n)],
+        'Gantt Chart': gantt_chart,  
+        'Average Turnaround Time': avg_turnaround,
+        'Average Waiting Time': avg_waiting,
+    }
+
+    return result
 
 
 
