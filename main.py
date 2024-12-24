@@ -106,6 +106,7 @@ def rr_scheduler(n, arrival, burst, quantum, priority):
 
     return result
 
+#Shortest Next Job - lin (done)
 @app.route('/sjn', methods=['GET', 'POST'])
 def sjn():
     if request.method == 'POST':
@@ -128,15 +129,15 @@ def sjn():
 
 
 def sjn_scheduler(n, arrival, burst):
-    T = [[i + 1, arrival[i], burst[i], 0, 0, 0] for i in range(n)]  # Process ID, Arrival, Burst, Completion, Turnaround, Waiting
+    T = [[i + 1, arrival[i], burst[i], 0, 0, 0] for i in range(n)]  #Process ID, Arrival, Burst, Completion, Turnaround, Waiting
     total_turnaround, total_waiting = 0, 0
 
-    T.sort(key=lambda x: x[1])  # Sort by arrival time
+    T.sort(key=lambda x: x[1])  #sort by arrival time
 
     completed = 0
     current_time = 0
     is_visited = [False] * n
-    gantt_chart = []  # To store the Gantt Chart data
+    gantt_chart = []  #store the Gantt Chart data
 
     while completed < n:
         index = -1
@@ -162,9 +163,9 @@ def sjn_scheduler(n, arrival, burst):
         gantt_chart.append((f"P{T[index][0]}", current_time, current_time + T[index][2]))
 
         current_time += T[index][2]
-        T[index][3] = current_time  # Completion Time
-        T[index][4] = T[index][3] - T[index][1]  # Turnaround Time
-        T[index][5] = T[index][4] - T[index][2]  # Waiting Time
+        T[index][3] = current_time               #completion Time
+        T[index][4] = T[index][3] - T[index][1]  #turnaround Time
+        T[index][5] = T[index][4] - T[index][2]  #waiting Time
         total_turnaround += T[index][4]
         total_waiting += T[index][5]
 
@@ -176,10 +177,12 @@ def sjn_scheduler(n, arrival, burst):
         'Arrival Times': [T[i][1] for i in range(n)],
         'Burst Times': [T[i][2] for i in range(n)],
         'Completion Times': [T[i][3] for i in range(n)],
-        'Turnaround Times': [T[i][4] for i in range(n)], #got error for turnaround and waiting need to state at the result 
+        'Turnaround Times': [T[i][4] for i in range(n)], 
         'Waiting Times': [T[i][5] for i in range(n)],
         'Gantt Chart': gantt_chart,  
+        'Total Turnaround Time': total_turnaround,
         'Average Turnaround Time': avg_turnaround,
+        'Total Waiting Time': total_waiting,
         'Average Waiting Time': avg_waiting,
     }
 
