@@ -190,6 +190,92 @@ def sjn_scheduler(n, arrival, burst):
 
 
 
+# Preemptive priority (Aleya)
 
-if __name__ == "__main__":
+@app.route('/pp', methods=['GET', 'POST'])
+def pp():
+    if request.method == 'POST':
+        try:
+            n = int(request.form['process_count'])
+            arrival = list(map(int, request.form['arrival'].split(',')))
+            burst = list(map(int, request.form['burst'].split(',')))
+            priority = list(map(int, request.form['priority'].split(',')))
+
+            if n < 3 or n > 10:
+                error = "Number of processes must be between 3 and 10."
+                return render_template('pp.html', error=error)
+
+            if len(arrival) != n or len(burst) != n or len(priority) != n:
+                error = "The number of arrival times, burst times, and priorities must match the number of processes."
+                return render_template('pp.html', error=error)
+
+            result = pp_scheduler(n, arrival, burst, priority)
+            print(result)  # Debugging output
+            return render_template('resultpp.html', result=result)
+
+        except ValueError:
+            error = "Invalid input. Please enter integers for process count, arrival times, burst times, and priorities."
+            return render_template('pp.html', error=error)
+
+    return render_template('pp.html')
+
+def pp_scheduler(n, arrival, burst, priority):
+    T = [[i + 1, arrival[i], burst[i], priority[i], 0, 0, 0] for i in range(n)]  # ID, Arrival, Burst, Priority, Completion, Turnaround, Waiting
+    total_turnaround, total_waiting = 0, 0
+    ready_queue = []
+    current_time = 0
+    completed = 0
+    gantt_chart = []
+
+    while completed < n:
+        # Add processes to ready queue
+        for i in range(n):
+            if not T[i][4] and T[i][1] <= current_time and i not in ready_queue:
+                ready_queue.append(i)
+
+        if ready_queue:
+            # Sort by priority (lower value = higher priority), then arrival time
+            ready_queue.sort(key=lambda x: (T[x][3], T[x][1]))
+            idx = ready_queue[0]
+
+            # Execute for 1 unit of time
+            gantt_chart.append((f"P{T[idx][0]}", current_time, current_time + 1))
+            T[idx][2] -= 1
+            current_time += 1
+
+            if T[idx][2] == 0:  # Process finished
+                T[idx][4] = current_time  # Completion Time
+                T[idx][5] = T[idx][4] - T[idx][1]  # Turnaround Time
+                T[idx][6] = T[idx][5] - burst[idx]  # Waiting Time
+                total_turnaround += T[idx][5]
+                total_waiting += T[idx][6]
+                completed += 1
+                ready_queue.pop(0)
+        else:
+            # CPU is idle
+            gantt_chart.append(('-', current_time, current_time + 1))
+            current_time += 1
+
+    avg_turnaround = total_turnaround / n
+    avg_waiting = total_waiting / n
+
+    result = {
+        'Processes': [f"P{T[i][0]}" for i in range(n)],
+        'Arrival Times': [T[i][1] for i in range(n)],
+        'Burst Times': [burst[i] for i in range(n)],
+        'Priorities': [T[i][3] for i in range(n)],
+        'Completion Times': [T[i][4] for i in range(n)],
+        'Turnaround Times': [T[i][5] for i in range(n)],
+        'Waiting Times': [T[i][6] for i in range(n)],
+        'Gantt Chart': gantt_chart,
+        'Total Turnaround Time': total_turnaround,
+        'Average Turnaround Time': avg_turnaround,
+        'Total Waiting Time': total_waiting,
+        'Average Waiting Time': avg_waiting,
+    }
+
+    return result
+
+
+if __name__ == '__main__':
     app.run(debug=True)
