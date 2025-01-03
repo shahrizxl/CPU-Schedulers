@@ -279,3 +279,91 @@ def pp_scheduler(n, arrival, burst, priority):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+# Shortest Remaining Time - Batrisya
+
+
+@app.route('/srt', methods=['GET', 'POST'])
+def srt():
+    if request.method == 'POST':
+        n = int(request.form['process_count'])
+        arrival = list(map(int, request.form['arrival'].split(',')))
+        burst = list(map(int, request.form['burst'].split(',')))
+
+        if n < 3 or n > 10:
+            error = "Number of processes must be between 3 and 10."
+            return render_template('srt.html', error=error)
+
+        if len(arrival) != n or len(burst) != n:
+            error = "The number of arrival times and burst times must match the number of processes."
+            return render_template('srt.html', error=error)
+
+        result = srt_scheduler(n, arrival, burst)
+        return render_template('resultsrt.html', algorithm="Shortest Remaining Time", result=result)
+
+    return render_template('srt.html')
+
+def srt_scheduler(n, arrival, burst):
+    processes = list(range(n))  # Process IDs
+    remaining_time = burst[:]
+    completion_time = [0] * n
+    turnaround_time = [0] * n
+    waiting_time = [0] * n
+    gantt_chart = []
+    
+    current_time = 0
+    completed = 0
+
+    while completed < n:
+        # Find process with shortest remaining time that has arrived
+        idx = -1
+        shortest_time = float('inf')
+
+        for i in range(n):
+            if arrival[i] <= current_time and remaining_time[i] > 0:
+                if remaining_time[i] < shortest_time:
+                    shortest_time = remaining_time[i]
+                    idx = i
+
+        if idx == -1:
+            # If no process is ready, CPU is idle
+            if not gantt_chart or gantt_chart[-1][0] != '-':
+                gantt_chart.append(('-', current_time, current_time + 1))
+            else:
+                gantt_chart[-1] = ('-', gantt_chart[-1][1], gantt_chart[-1][2] + 1)
+            current_time += 1
+            continue
+
+        # Execute the process for 1 unit of time
+        gantt_chart.append((f"P{idx+1}", current_time, current_time + 1))
+        remaining_time[idx] -= 1
+        current_time += 1
+
+        # Check if the process is completed
+        if remaining_time[idx] == 0:
+            completed += 1
+            completion_time[idx] = current_time
+            turnaround_time[idx] = completion_time[idx] - arrival[idx]
+            waiting_time[idx] = turnaround_time[idx] - burst[idx]
+
+    # Calculate totals and averages
+    total_turnaround_time = sum(turnaround_time)
+    total_waiting_time = sum(waiting_time)
+    avg_turnaround_time = total_turnaround_time / n
+    avg_waiting_time = total_waiting_time / n
+
+    result = {
+        'Processes': [f"P{i+1}" for i in range(n)],
+        'Arrival Times': arrival,
+        'Burst Times': burst,
+        'Completion Times': completion_time,
+        'Turnaround Times': turnaround_time,
+        'Waiting Times': waiting_time,
+        'Gantt Chart': gantt_chart,
+        'Total Turnaround Time': total_turnaround_time,
+        'Average Turnaround Time': avg_turnaround_time,
+        'Total Waiting Time': total_waiting_time,
+        'Average Waiting Time': avg_waiting_time,
+    }
+
+    return result
