@@ -276,10 +276,6 @@ def pp_scheduler(n, arrival, burst, priority):
 
     return result
 
-
-if __name__ == '__main__':
-    app.run(debug=True)
-
 # Shortest Remaining Time - Batrisya
 
 @app.route('/srt', methods=['GET', 'POST'])
@@ -366,6 +362,7 @@ def srt_scheduler(n, arrival, burst):
 
     except Exception as e:
         raise RuntimeError(f"Error in SRT Scheduler: {str(e)}")
+
 
 if __name__ == '__main__':
     app.run(debug=True)
