@@ -199,10 +199,12 @@ def sjn_scheduler(n, arrival, burst, process_names):
 def pp():
     if request.method == 'POST':
         try:
-            n = int(request.form['process_count'])
+            process_names = request.form['process_names'].split(',')
             arrival = list(map(int, request.form['arrival'].split(',')))
             burst = list(map(int, request.form['burst'].split(',')))
             priority = list(map(int, request.form['priority'].split(',')))
+            
+            n = len(process_names)
 
             if n < 3 or n > 10:
                 error = "Number of processes must be between 3 and 10."
@@ -212,8 +214,7 @@ def pp():
                 error = "The number of arrival times, burst times, and priorities must match the number of processes."
                 return render_template('pp.html', error=error)
 
-            result = pp_scheduler(n, arrival, burst, priority)
-            print(result)  # Debugging output
+            result = pp_scheduler(n, arrival, burst, priority,process_names)
             return render_template('resultpp.html', result=result)
 
         except ValueError:
@@ -222,8 +223,8 @@ def pp():
 
     return render_template('pp.html')
 
-def pp_scheduler(n, arrival, burst, priority):
-    T = [[i + 1, arrival[i], burst[i], priority[i], 0, 0, 0] for i in range(n)]  # ID, Arrival, Burst, Priority, Completion, Turnaround, Waiting
+def pp_scheduler(n, arrival, burst, priority, process_names):
+    T = [[process_names[i], arrival[i], burst[i], priority[i], 0, 0, 0] for i in range(n)]  # Process Name, Arrival, Burst, Priority, Completion, Turnaround, Waiting
     total_turnaround, total_waiting = 0, 0
     ready_queue = []
     current_time = 0
@@ -231,35 +232,29 @@ def pp_scheduler(n, arrival, burst, priority):
     gantt_chart = []
 
     while completed < n:
-        # Add processes to ready queue
         for i in range(n):
-            if not T[i][4] and T[i][1] <= current_time and i not in ready_queue:
-                ready_queue.append(i)
+            if T[i][1] <= current_time and T[i][2] > 0 and T[i] not in ready_queue:
+                ready_queue.append(T[i])
 
         if ready_queue:
-            # Sort by priority (lower value = higher priority), then arrival time
-            ready_queue.sort(key=lambda x: (T[x][3], T[x][1]))
-            idx = ready_queue[0]
-
-            # Execute for 1 unit of time
-            if gantt_chart and gantt_chart[-1][0] == f"P{T[idx][0]}":
-                # Extend the current process's segment
+            ready_queue.sort(key=lambda x: (x[3], x[1]))
+            idx = ready_queue.pop(0)
+            
+            if gantt_chart and gantt_chart[-1][0] == idx[0]:
                 gantt_chart[-1] = (gantt_chart[-1][0], gantt_chart[-1][1], gantt_chart[-1][2] + 1)
             else:
-                # Start a new segment for the process
-                gantt_chart.append((f"P{T[idx][0]}", current_time, current_time + 1))
-
-            T[idx][2] -= 1
+                gantt_chart.append((idx[0], current_time, current_time + 1))
+            
+            idx[2] -= 1
             current_time += 1
 
-            if T[idx][2] == 0:  # Process finished
-                T[idx][4] = current_time  # Completion Time
-                T[idx][5] = T[idx][4] - T[idx][1]  # Turnaround Time
-                T[idx][6] = T[idx][5] - burst[idx]  # Waiting Time
-                total_turnaround += T[idx][5]
-                total_waiting += T[idx][6]
+            if idx[2] == 0:
+                idx[4] = current_time  # Completion Time
+                idx[5] = idx[4] - idx[1]  # Turnaround Time
+                idx[6] = idx[5] - (burst[process_names.index(idx[0])])  # Waiting Time
+                total_turnaround += idx[5]
+                total_waiting += idx[6]
                 completed += 1
-                ready_queue.pop(0)
         else:
             # CPU is idle
             if gantt_chart and gantt_chart[-1][0] == '-':
@@ -274,9 +269,9 @@ def pp_scheduler(n, arrival, burst, priority):
     avg_waiting = total_waiting / n
 
     result = {
-        'Processes': [f"P{T[i][0]}" for i in range(n)],
+        'Processes': [T[i][0] for i in range(n)],
         'Arrival Times': [T[i][1] for i in range(n)],
-        'Burst Times': [burst[i] for i in range(n)],
+        'Burst Times': [burst[process_names.index(T[i][0])] for i in range(n)],
         'Priorities': [T[i][3] for i in range(n)],
         'Completion Times': [T[i][4] for i in range(n)],
         'Turnaround Times': [T[i][5] for i in range(n)],
@@ -297,9 +292,11 @@ def pp_scheduler(n, arrival, burst, priority):
 def shortest_remaining_time():
     if request.method == 'POST':
         try:
-            n = int(request.form['process_count'])
+            process_names = request.form['process_names'].split(',')
             arrival = list(map(int, request.form['arrival'].split(',')))
             burst = list(map(int, request.form['burst'].split(',')))
+            
+            n = len(process_names)
 
             if n < 3 or n > 10:
                 error = "Number of processes must be between 3 and 10."
@@ -308,7 +305,7 @@ def shortest_remaining_time():
                 error = "The number of arrival times and burst times must match the number of processes."
                 return render_template('srt.html', error=error)
 
-            result = srt_scheduler(n, arrival, burst)
+            result = srt_scheduler(n, arrival, burst,process_names)
             return render_template('resultsrt.html', algorithm="Shortest Remaining Time", result=result)
 
         except ValueError:
@@ -319,9 +316,7 @@ def shortest_remaining_time():
             return render_template('srt.html', error=error)
     return render_template('srt.html')
 
-def srt_scheduler(n, arrival, burst):
-    try:
-        processes = list(range(n))
+def srt_scheduler(n, arrival, burst, process_names):
         remaining_burst = burst[:]
         completion_time = [0] * n
         waiting_time = [0] * n
@@ -339,13 +334,16 @@ def srt_scheduler(n, arrival, burst):
                     idx = i
 
             if idx == -1:
-                gantt_chart.append(('-', current_time, current_time + 1))
+                if gantt_chart and gantt_chart[-1][0] == '-':
+                    gantt_chart[-1] = ('-', gantt_chart[-1][1], gantt_chart[-1][2] + 1)
+                else:
+                    gantt_chart.append(('-', current_time, current_time + 1))
                 current_time += 1
             else:
-                if gantt_chart and gantt_chart[-1][0] == f"P{processes[idx] + 1}":
+                if gantt_chart and gantt_chart[-1][0] == process_names[idx]:
                     gantt_chart[-1] = (gantt_chart[-1][0], gantt_chart[-1][1], current_time + 1)
                 else:
-                    gantt_chart.append((f"P{processes[idx] + 1}", current_time, current_time + 1))
+                    gantt_chart.append((process_names[idx], current_time, current_time + 1))
 
                 remaining_burst[idx] -= 1
                 current_time += 1
@@ -362,7 +360,7 @@ def srt_scheduler(n, arrival, burst):
         avg_waiting_time = total_waiting_time / n
 
         return {
-            'Processes': [f"P{processes[i] + 1}" for i in range(n)],
+            'Processes': process_names,
             'Arrival Times': arrival,
             'Burst Times': burst,
             'Completion Times': completion_time,
@@ -375,8 +373,6 @@ def srt_scheduler(n, arrival, burst):
             'Average Waiting Time': avg_waiting_time,
         }
 
-    except Exception as e:
-        raise RuntimeError(f"Error in SRT Scheduler: {str(e)}")
 
 
 if __name__ == '__main__':
