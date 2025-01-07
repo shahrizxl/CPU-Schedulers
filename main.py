@@ -242,7 +242,13 @@ def pp_scheduler(n, arrival, burst, priority):
             idx = ready_queue[0]
 
             # Execute for 1 unit of time
-            gantt_chart.append((f"P{T[idx][0]}", current_time, current_time + 1))
+            if gantt_chart and gantt_chart[-1][0] == f"P{T[idx][0]}":
+                # Extend the current process's segment
+                gantt_chart[-1] = (gantt_chart[-1][0], gantt_chart[-1][1], gantt_chart[-1][2] + 1)
+            else:
+                # Start a new segment for the process
+                gantt_chart.append((f"P{T[idx][0]}", current_time, current_time + 1))
+
             T[idx][2] -= 1
             current_time += 1
 
@@ -256,7 +262,12 @@ def pp_scheduler(n, arrival, burst, priority):
                 ready_queue.pop(0)
         else:
             # CPU is idle
-            gantt_chart.append(('-', current_time, current_time + 1))
+            if gantt_chart and gantt_chart[-1][0] == '-':
+                # Extend the idle segment
+                gantt_chart[-1] = ('-', gantt_chart[-1][1], gantt_chart[-1][2] + 1)
+            else:
+                # Start a new idle segment
+                gantt_chart.append(('-', current_time, current_time + 1))
             current_time += 1
 
     avg_turnaround = total_turnaround / n
@@ -278,6 +289,7 @@ def pp_scheduler(n, arrival, burst, priority):
     }
 
     return result
+
 
 # Shortest Remaining Time - Batrisya
 
