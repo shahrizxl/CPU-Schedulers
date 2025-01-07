@@ -16,17 +16,14 @@
     </div>
     
     <form method="POST">
-        <label for="process_count">Number of Processes (3-10):</label>
-        <input type="number" id="process_count" name="process_count" placeholder="example: '3'" min="3" max="10" required><br>
+        <label for="process_names">Process Names:</label>
+        <input type="text" id="process_names" name="process_names" placeholder="example: 'P1,P2,P3'" required><br>
 
         <label for="arrival">Arrival Times:</label>
         <input type="text" id="arrival" name="arrival" pattern="\d+(,\d+)*" placeholder="example: '2,3,4'"  required><br>
 
         <label for="burst">Burst Times:</label>
         <input type="text" id="burst" name="burst" pattern="\d+(,\d+)*" placeholder="example: '2,3,4'" required><br>
-
-        <label>Priorities (lower value = higher priority):</label>
-        <input type="text" name="priority" placeholder="example:'2,3,4'" required><br>
 
         <label for="quantum">Quantum:</label>
         <input type="number" id="quantum" name="quantum" placeholder="example: '3'" min="1" required><br>

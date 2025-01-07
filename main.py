@@ -10,33 +10,35 @@ def home():
 @app.route('/rr', methods=['GET', 'POST'])
 def rr():
     if request.method == 'POST':
-        n = int(request.form['process_count'])
+        process_names = request.form['process_names'].split(',')
         arrival = list(map(int, request.form['arrival'].split(',')))
         burst = list(map(int, request.form['burst'].split(',')))
-        priority = list(map(int, request.form['priority'].split(',')))
         quantum = int(request.form['quantum'])
+
+        n = len(process_names)
 
         if n < 3 or n > 10:
             error = "Number of processes must be between 3 and 10."
             return render_template('rr.html', error=error)
 
-        if len(arrival) != n or len(burst) != n or len(priority) != n:
-            error = "The number of arrival times, burst times, and priorities must match the number of processes."
+        if len(arrival) != n or len(burst) != n:
+            error = "The number of arrival times and burst times must match the number of processes."
             return render_template('rr.html', error=error)
 
-        result = rr_scheduler(n, arrival, burst, quantum, priority)
+        result = rr_scheduler(n, arrival, burst, quantum)
+        result['Processes'] = process_names  
+        result['Gantt Chart'] = [(process_names[process], start, end) if process != '-' else ('-', start, end) for process, start, end in result['Gantt Chart']]
         return render_template('resultrr.html', algorithm="Round Robin", result=result)
 
     return render_template('rr.html')
 
 
-def rr_scheduler(n, arrival, burst, quantum, priority):
+def rr_scheduler(n, arrival, burst, quantum):
     processes = list(range(n)) 
-    processes.sort(key=lambda x: (arrival[x], priority[x]))  
+    processes.sort(key=lambda x: (arrival[x]))  
 
     arrival = [arrival[i] for i in processes]
     burst = [burst[i] for i in processes]
-    priority = [priority[i] for i in processes]
 
     remaining_burst = burst[:]
     completion_time = [0] * n
@@ -64,7 +66,7 @@ def rr_scheduler(n, arrival, burst, quantum, priority):
 
         current_process_id = process_queue.pop(0)
         time_slice = min(quantum, remaining_burst[current_process_id])
-        gantt_chart.append((f"P{processes[current_process_id]+1}", current_time, current_time + time_slice))
+        gantt_chart.append((processes[current_process_id], current_time, current_time + time_slice))
 
         current_time += time_slice
         remaining_burst[current_process_id] -= time_slice
@@ -90,10 +92,9 @@ def rr_scheduler(n, arrival, burst, quantum, priority):
     avg_turnaround_time = sum(turnaround_time) / n
 
     result = {
-        'Processes': [f"P{processes[i]+1}" for i in range(n)],
+        'Processes': processes,
         'Arrival Times': arrival,
         'Burst Times': burst,
-        'Priorities': priority,
         'Completion Times': completion_time,
         'Turnaround Times': turnaround_time,
         'Waiting Times': waiting_time,
@@ -110,9 +111,11 @@ def rr_scheduler(n, arrival, burst, quantum, priority):
 @app.route('/sjn', methods=['GET', 'POST'])
 def sjn():
     if request.method == 'POST':
-        n = int(request.form['process_count'])
+        process_names = request.form['process_names'].split(',')
         arrival = list(map(int, request.form['arrival'].split(',')))
         burst = list(map(int, request.form['burst'].split(',')))
+        
+        n = len(process_names)
 
         if n < 3 or n > 10:
             error = "Number of processes must be between 3 and 10."
@@ -122,14 +125,14 @@ def sjn():
             error = "The number of arrival times and burst times must match the number of processes."
             return render_template('sjn.html', error=error)
 
-        result = sjn_scheduler(n, arrival, burst)
+        result = sjn_scheduler(n, arrival, burst,process_names)
         return render_template('resultsjn.html', algorithm="Shortest Job Next", result=result)
 
     return render_template('sjn.html')
 
 
-def sjn_scheduler(n, arrival, burst):
-    T = [[i + 1, arrival[i], burst[i], 0, 0, 0] for i in range(n)]  #Process ID, Arrival, Burst, Completion, Turnaround, Waiting
+def sjn_scheduler(n, arrival, burst, process_names):
+    T = [[process_names[i], arrival[i], burst[i], 0, 0, 0] for i in range(n)]  #Process ID, Arrival, Burst, Completion, Turnaround, Waiting
     total_turnaround, total_waiting = 0, 0
 
     T.sort(key=lambda x: x[1])  #sort by arrival time
@@ -160,7 +163,7 @@ def sjn_scheduler(n, arrival, burst):
         completed += 1
 
         
-        gantt_chart.append((f"P{T[index][0]}", current_time, current_time + T[index][2]))
+        gantt_chart.append((f"{T[index][0]}", current_time, current_time + T[index][2]))
 
         current_time += T[index][2]
         T[index][3] = current_time               #completion Time
@@ -173,7 +176,7 @@ def sjn_scheduler(n, arrival, burst):
     avg_waiting = total_waiting / n
 
     result = {
-        'Processes': [f"P{T[i][0]}" for i in range(n)],
+        'Processes': [T[i][0] for i in range(n)],
         'Arrival Times': [T[i][1] for i in range(n)],
         'Burst Times': [T[i][2] for i in range(n)],
         'Completion Times': [T[i][3] for i in range(n)],
