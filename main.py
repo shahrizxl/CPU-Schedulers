@@ -25,20 +25,20 @@ def rr():
             error = "The number of arrival times and burst times must match the number of processes."
             return render_template('rr.html', error=error)
 
-        result = rr_scheduler(n, arrival, burst, quantum)
-        result['Processes'] = process_names  
-        result['Gantt Chart'] = [(process_names[process], start, end) if process != '-' else ('-', start, end) for process, start, end in result['Gantt Chart']]
+        result = rr_scheduler(n, arrival, burst, quantum, process_names)
+
         return render_template('resultrr.html', algorithm="Round Robin", result=result)
 
     return render_template('rr.html')
 
 
-def rr_scheduler(n, arrival, burst, quantum):
+def rr_scheduler(n, arrival, burst, quantum, process_names):
     processes = list(range(n)) 
     processes.sort(key=lambda x: (arrival[x]))  
 
     arrival = [arrival[i] for i in processes]
     burst = [burst[i] for i in processes]
+    process_names = [process_names[i] for i in processes]
 
     remaining_burst = burst[:]
     completion_time = [0] * n
@@ -92,7 +92,7 @@ def rr_scheduler(n, arrival, burst, quantum):
     avg_turnaround_time = sum(turnaround_time) / n
 
     result = {
-        'Processes': processes,
+        'Processes': process_names,
         'Arrival Times': arrival,
         'Burst Times': burst,
         'Completion Times': completion_time,
