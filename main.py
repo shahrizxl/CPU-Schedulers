@@ -66,7 +66,7 @@ def rr_scheduler(n, arrival, burst, quantum, process_names):
 
         current_process_id = process_queue.pop(0)
         time_slice = min(quantum, remaining_burst[current_process_id])
-        gantt_chart.append((processes[current_process_id], current_time, current_time + time_slice))
+        gantt_chart.append((process_names[current_process_id], current_time, current_time + time_slice))
 
         current_time += time_slice
         remaining_burst[current_process_id] -= time_slice
