@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NON-Preemptive Priority Scheduling Result</title>
+    <link rel="stylesheet" href="/static/result.css">
+</head>
+<body>
+    <h1>NON-Preemptive Priority Scheduling Result</h1>
+
+    {% if result %}
+        <h3>Gantt Chart:</h3>
+        <div class="gantt-chart">
+            {% for process, start, end in result['Gantt Chart'] %}
+                <div class="gantt-block" style="width:{{ (end - start) * 40 }}px;">
+                    {{ process }}<br>
+                    {{ start }} - {{ end }}
+                </div>
+            {% endfor %}
+        </div>
+
+        <h3>Output for Each Process:</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Process</th>
+                    <th>Arrival Time</th>
+                    <th>Burst Time</th>
+                    <th>Priorities</th>
+                    <th>Completion Time</th>
+                    <th>Turnaround Time</th>
+                    <th>Waiting Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in range(result['Processes']|length) %}
+                    <tr>
+                        <td>{{ result['Processes'][i] }}</td>
+                        <td>{{ result['Arrival Times'][i] }}</td>
+                        <td>{{ result['Burst Times'][i] }}</td>
+                        <td>{{ result['Priorities'][i] }}</td>
+                        <td>{{ result['Completion Times'][i] }}</td>
+                        <td>{{ result['Turnaround Times'][i] }}</td>
+                        <td>{{ result['Waiting Times'][i] }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>Summary:</h3>
+        <p>Total Turnaround Time: {{ result['Total Turnaround Time'] }}</p>
+        <p>Average Turnaround Time: {{ result['Average Turnaround Time'] }}</p>
+        <p>Total Waiting Time: {{ result['Total Waiting Time'] }}</p>
+        <p>Average Waiting Time: {{ result['Average Waiting Time'] }}</p>
+    {% else %}
+        <p>No result available. Please try submitting the inputs again.</p>
+    {% endif %}
+
+   <p><a href="/">Go Back to Home</a></p> 
+</body>
+</html>
